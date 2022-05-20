@@ -2,3 +2,5 @@
 *.iml
 
 mnist-dataset/*
+
+src/de/jensostertag/cnn/testing/*
