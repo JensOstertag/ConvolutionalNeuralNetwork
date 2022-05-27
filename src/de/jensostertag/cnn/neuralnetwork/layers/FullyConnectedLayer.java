@@ -21,16 +21,16 @@ public class FullyConnectedLayer implements Layer {
     }
     
     @Override
-    public Object propagate(Object layerInput) {
-        if(layerInput instanceof double[] input) {
-            if(input.length == this.INPUT_LENGTH) {
+    public Object propagate(Object input) {
+        if(input instanceof double[] layerInput) {
+            if(layerInput.length == this.INPUT_LENGTH) {
                 double[] output = new double[this.OUTPUT_LENGTH];
                 
                 for(int i = 0; i < this.weights.length; i++) {
                     for(int j = 0; j < this.weights[i].length; j++) {
                         double inputValue = 1;
                         if(i != this.weights.length - 1)
-                            inputValue = input[i];
+                            inputValue = layerInput[i];
                         double weight = this.weights[i][j];
                         
                         output[j] += inputValue * weight;
@@ -39,9 +39,9 @@ public class FullyConnectedLayer implements Layer {
                 
                 return LayerActivation.activate(this.activationFunction, output);
             } else
-                throw new IllegalArgumentException("Too short or too long Input");
+                throw new IllegalArgumentException("Input is not of correct Size");
         } else
-            throw new IllegalArgumentException("layerInput is supposed to be a Double Array");
+            throw new IllegalArgumentException("Input is supposed to be a Double Array");
     }
     
     @Override
@@ -63,7 +63,7 @@ public class FullyConnectedLayer implements Layer {
                 
                 return newMistakes;
             } else
-                throw new IllegalArgumentException("There are too many or too few Mistakes or Outputs");
+                throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
         } else
             throw new IllegalArgumentException("PreviousMistakes and LayerOutput are supposed to be a Double Array");
     }
@@ -83,7 +83,7 @@ public class FullyConnectedLayer implements Layer {
             
                 return newMistakes;
             } else
-                throw new IllegalArgumentException("There are too many or too few ExpectedOutput or Output Vales");
+                throw new IllegalArgumentException("ExpectedOutput or LayerOutput is not of correct Size");
         } else
             throw new IllegalArgumentException("ExpectedOutput and LayerOutput are supposed to be a Double Array");
     }
