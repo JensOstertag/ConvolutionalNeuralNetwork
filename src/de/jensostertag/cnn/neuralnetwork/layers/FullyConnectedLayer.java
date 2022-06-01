@@ -8,6 +8,7 @@ public class FullyConnectedLayer implements Layer {
     protected final int INPUT_LENGTH;
     protected final int OUTPUT_LENGTH;
     protected double[][] weights;
+    protected double[][] previousWeightChange;
     protected final ActivationFunction activationFunction;
     
     public FullyConnectedLayer(int INPUT_LENGTH, int OUTPUT_LENGTH, ActivationFunction activationFunction) {
@@ -18,6 +19,7 @@ public class FullyConnectedLayer implements Layer {
         for(int i = 0; i < this.weights.length; i++)
             for(int j = 0; j < this.weights[i].length; j++)
                 this.weights[i][j] = Config.DEFAULT_WEIGHT_MIN + Math.random() * (Config.DEFAULT_WEIGHT_MAX - Config.DEFAULT_WEIGHT_MIN);
+        this.previousWeightChange = new double[this.INPUT_LENGTH + 1][this.OUTPUT_LENGTH];
     }
     
     @Override
@@ -100,8 +102,10 @@ public class FullyConnectedLayer implements Layer {
                     for(int j = 0; j < mistakes.length; j++) {
                         double outputValue = output[j];
                         double mistake = mistakes[j];
+                        double inertia = this.previousWeightChange[i][j] * Config.INERTIA;
             
-                        double deltaWeight = learningRate * outputValue * mistake;
+                        double deltaWeight = - learningRate * outputValue * mistake + inertia;
+                        this.previousWeightChange[i][j] = deltaWeight;
                         newWeights[i][j] += deltaWeight;
                     }
                 }
