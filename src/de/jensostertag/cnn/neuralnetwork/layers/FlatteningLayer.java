@@ -41,7 +41,7 @@ public class FlatteningLayer implements Layer {
     
     @Override
     public Object mistakes(Object previousMistakes, Object layerOutput) {
-        if(previousMistakes instanceof double[] mistakes && layerOutput instanceof double[] output) {
+        if(previousMistakes instanceof double[] mistakes && layerOutput instanceof double[]) {
             double[][][] newMistakes = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
             
             int valuesPerMatrix = this.INPUT_HEIGHT * this.INPUT_WIDTH;
