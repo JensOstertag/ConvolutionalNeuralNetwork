@@ -6,7 +6,7 @@ import de.jensostertag.cnn.imageprocessing.GrayscaleImage;
 import java.io.File;
 
 public class ImageDataset extends Dataset {
-    public void addFolder(String folderPath, Object[] expectedOutput, boolean grayScale) {
+    public void addFolder(String folderPath, Object expectedOutput, boolean grayScale) {
         if(!(super.isValid())) {
             File folder = new File(folderPath);
             if(folder.exists() && folder.isDirectory()) {
@@ -23,7 +23,7 @@ public class ImageDataset extends Dataset {
                                     for(int k = 0; k < input[i][j].length; k++)
                                         input[i][j][k] = pixels[i][j][k] / 255d;
     
-                            super.insertData(input, expectedOutput.clone());
+                            super.insertData(input, expectedOutput);
                         } else {
                             ColoredImage image = new ColoredImage(file.getPath());
     
@@ -35,7 +35,7 @@ public class ImageDataset extends Dataset {
                                     for(int k = 0; k < input[i][j].length; k++)
                                         input[i][j][k] = pixels[i][j][k] / 255d;
                             
-                            super.insertData(input, expectedOutput.clone());
+                            super.insertData(input, expectedOutput);
                         }
                     }
                 }

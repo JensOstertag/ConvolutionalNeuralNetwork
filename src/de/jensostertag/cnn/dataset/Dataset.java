@@ -53,9 +53,9 @@ public class Dataset {
     public Object getExpectedOutput(int index) {
         if(isValid())
             if(index >= 0 && index < this.expectedOutputs.length)
-                return this.inputs[index];
+                return this.expectedOutputs[index];
             else
-                throw new IndexOutOfBoundsException("Index " + index + " out of Bounds for Array Length " + this.inputs.length);
+                throw new IndexOutOfBoundsException("Index " + index + " out of Bounds for Array Length " + this.expectedOutputs.length);
         else
             throw new IllegalStateException("Dataset must be validated");
     }
