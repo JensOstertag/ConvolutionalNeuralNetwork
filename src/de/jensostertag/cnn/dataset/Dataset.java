@@ -10,8 +10,8 @@ public class Dataset {
             return false;
     
         for(int i = 0; i < this.inputs.length; i++)
-            if(this.inputs[i].getClass() == this.inputs[0].getClass()
-                    || this.expectedOutputs[i].getClass() ==  this.expectedOutputs[0].getClass())
+            if(this.inputs[i].getClass() != this.inputs[0].getClass()
+                    || this.expectedOutputs[i].getClass() !=  this.expectedOutputs[0].getClass())
                 return false;
         
         this.state = DatasetState.VALIDATED;
