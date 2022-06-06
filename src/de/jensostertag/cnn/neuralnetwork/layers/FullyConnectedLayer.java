@@ -93,17 +93,19 @@ public class FullyConnectedLayer implements Layer {
     @Override
     public void optimizeWeights(Object previousMistakes, Object layerOutput, double learningRate) {
         if(previousMistakes instanceof double[] mistakes && layerOutput instanceof double[] output) {
-            if(mistakes.length == this.OUTPUT_LENGTH && output.length == this.OUTPUT_LENGTH) {
+            if(mistakes.length == this.OUTPUT_LENGTH && output.length == this.INPUT_LENGTH) {
                 double[][] newWeights = new double[this.weights.length][];
                 for(int i = 0; i < newWeights.length; i++)
                     newWeights[i] = this.weights[i].clone();
-    
-                for(int i = 0; i < this.weights.length - 1; i++) {
-                    for(int j = 0; j < mistakes.length; j++) {
-                        double outputValue = output[j];
+                
+                for(int i = 0; i < this.weights.length; i++) {
+                    for(int j = 0; j < this.weights[i].length; j++) {
+                        double outputValue = 1;
+                        if(i < output.length)
+                            outputValue = output[i];
                         double mistake = mistakes[j];
                         double inertia = this.previousWeightChange[i][j] * Config.INERTIA;
-            
+                        
                         double deltaWeight = - learningRate * outputValue * mistake + inertia;
                         this.previousWeightChange[i][j] = deltaWeight;
                         newWeights[i][j] += deltaWeight;
@@ -112,7 +114,7 @@ public class FullyConnectedLayer implements Layer {
                 
                 this.weights = newWeights;
             } else
-                throw new IllegalArgumentException("There are too many or too few Mistakes or Outputs");
+                throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
         } else
             throw new IllegalArgumentException("PreviousMistakes and LayerOutput are supposed to be a Double Array");
     }
