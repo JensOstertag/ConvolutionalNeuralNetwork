@@ -72,6 +72,32 @@ public class Matrices {
             throw new IllegalArgumentException("Matrix1 and Matrix2 are not of same Size");
     }
     
+    public static int[] highestValue(double[][] matrix) {
+        int[] dimensions = getSize(matrix);
+        int[] output = new int[2];
+        double highestValue = Double.NEGATIVE_INFINITY;
+        for(int i = 0; i < matrix.length; i++) {
+            for(int j = 0; j < matrix[i].length; j++) {
+                if(matrix[i][j] > highestValue) {
+                    highestValue = matrix[i][j];
+                    output[0] = i;
+                    output[1] = j;
+                }
+            }
+        }
+        
+        return output;
+    }
+    
+    public static double sum(double[][] matrix) {
+        int[] dimensions = getSize(matrix);
+        double sum = 0;
+        for(int i = 0; i < matrix.length; i++)
+            for(int j = 0; j < matrix[i].length; j++)
+                sum += matrix[i][j];
+        return sum;
+    }
+    
     public static double[] singleValueMatrix(int height, double value) {
         double[] output = new double[height];
         Arrays.fill(output, value);
