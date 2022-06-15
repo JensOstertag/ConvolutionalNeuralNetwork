@@ -121,6 +121,23 @@ public class Matrices {
         return output;
     }
     
+    public static double[][] center(double[][] matrix, int height, int width) {
+        int[] dimensions = getSize(matrix);
+        if(dimensions[0] <= height && dimensions[1] <= width) {
+            if((height - dimensions[0]) % 2 == 0 && (width - dimensions[1]) % 2 == 0) {
+                double[][] output = new double[height][width];
+                int heightOffset = (height - dimensions[0]) / 2;
+                int widthOffset = (width - dimensions[1]) / 2;
+                for(int i = 0; i < matrix.length; i++)
+                    for(int j = 0; j < matrix[i].length; j++)
+                        output[i + heightOffset][j + widthOffset] = matrix[i][j];
+                return output;
+            } else
+                throw new IllegalArgumentException("The given Matrix cannot be centered within the expected Output Matrix");
+        } else
+            throw new IllegalArgumentException("Cannot center a Matrix within a smaller Matrix");
+    }
+    
     public static double[] add(double[] vector1, double[] vector2) {
         int[] dimensions = getSameSize(vector1, vector2);
         double[] output = new double[dimensions[0]];
@@ -180,6 +197,15 @@ public class Matrices {
             for(int j = 0; j < output[i].length; j++)
                 output[i][j] = matrix[j][i];
         
+        return output;
+    }
+    
+    public static double[][] rotate(double[][] matrix) {
+        int[] dimensions = getSize(matrix);
+        double[][] output = new double[dimensions[0]][dimensions[1]];
+        for(int i = output.length - 1; i >= 0; i--)
+            for(int j = output[i].length - 1; j >= 0; j--)
+                output[i][j] = matrix[dimensions[0] - 1 - i][dimensions[1] - 1 - j];
         return output;
     }
     
