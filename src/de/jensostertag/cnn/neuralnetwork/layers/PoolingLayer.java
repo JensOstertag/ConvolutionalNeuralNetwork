@@ -1,9 +1,8 @@
 package de.jensostertag.cnn.neuralnetwork.layers;
 
+import de.jensostertag.cnn.neuralnetwork.util.Matrices;
 import de.jensostertag.cnn.neuralnetwork.util.pooling.Pooling;
 import de.jensostertag.cnn.neuralnetwork.util.pooling.PoolingType;
-
-import java.util.Arrays;
 
 public class PoolingLayer implements Layer {
     private final int INPUT_CHANNELS;
@@ -22,52 +21,25 @@ public class PoolingLayer implements Layer {
     }
     
     @Override
-    public Object propagate(Object input) {
+    public double[][][] propagate(Object input) {
         if(input instanceof double[][][] layerInput) {
-            if(layerInput.length == this.INPUT_CHANNELS) {
-                int outputHeight = this.INPUT_HEIGHT / this.POOLING.POOLING_SIZE;
-                int outputWidth = this.INPUT_WIDTH / this.POOLING.POOLING_SIZE;
+            if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH)) {
+                int ps = this.POOLING.POOLING_SIZE;
+                double[][][] output = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT / ps][this.INPUT_WIDTH / ps];
                 
-                double[][][] output = new double[this.INPUT_CHANNELS][outputHeight][outputWidth];
-                if(this.POOLING.POOLING_TYPE == PoolingType.MAX)
-                    for(double[][] outputMatrix : output)
-                        for(double[] outputVector : outputMatrix)
-                            Arrays.fill(outputVector, Double.NEGATIVE_INFINITY);
-                
-                for(int i = 0; i < layerInput.length; i++) {
-                    if(layerInput[i].length == this.INPUT_HEIGHT) {
-                        for(int j = 0; j < layerInput[i].length; j++) {
-                            if(layerInput[i][j].length == this.INPUT_WIDTH) {
-                                for(int k = 0; k < layerInput[i][j].length; k++) {
-                                    int outputRow = j / this.POOLING.POOLING_SIZE;
-                                    int outputCol = k / this.POOLING.POOLING_SIZE;
-                                    
-                                    if(this.POOLING.POOLING_TYPE == PoolingType.MAX) {
-                                        /*
-                                         *  Max-Pooling
-                                         */
-                                        if(output[i][outputRow][outputCol] < layerInput[i][j][k])
-                                            output[i][outputRow][outputCol] = layerInput[i][j][k];
-                                    } else if(this.POOLING.POOLING_TYPE == PoolingType.MEAN) {
-                                        /*
-                                         *  Mean-Pooling
-                                         */
-                                        double value = layerInput[i][j][k];
-                                        
-                                        int poolingRow = j % this.POOLING.POOLING_SIZE;
-                                        int poolingCol = k % this.POOLING.POOLING_SIZE;
-                                        
-                                        int nthValue = poolingRow * this.POOLING.POOLING_SIZE + poolingCol + 1;
-                                        
-                                        double currentMean = output[i][outputRow][outputCol];
-                                        output[i][outputRow][outputCol] = (currentMean * (nthValue - 1) + value) / nthValue;
-                                    }
-                                }
-                            } else
-                                throw new IllegalArgumentException("Input is not of correct Size");
+                for(int i = 0; i < output.length; i++) {
+                    for(int j = 0; j < output[i].length; j++) {
+                        for(int k = 0; k < output[i][j].length; k++) {
+                            double[][] subMatrix = Matrices.subMatrix(layerInput[i], j * ps, k * ps, ps, ps);
+                            if(this.POOLING.POOLING_TYPE == PoolingType.MAX) {
+                                int[] highestIndex = Matrices.highestValue(subMatrix);
+                                output[i][j][k] = subMatrix[highestIndex[0]][highestIndex[1]];
+                            } else if(this.POOLING.POOLING_TYPE == PoolingType.MEAN) {
+                                double sum = Matrices.sum(subMatrix);
+                                output[i][j][k] = sum / (ps * ps);
+                            }
                         }
-                    } else
-                        throw new IllegalArgumentException("Input is not of correct Size");
+                    }
                 }
                 
                 return output;
@@ -78,33 +50,34 @@ public class PoolingLayer implements Layer {
     }
     
     @Override
-    public Object mistakes(Object previousMistakes, Object layerOutput) {
-        if(previousMistakes instanceof double[][][] mistakes && layerOutput instanceof double[][][] output) {
-            if(mistakes.length == this.INPUT_CHANNELS && output.length == this.INPUT_CHANNELS) {
-                for(int i = 0; i < mistakes.length; i++) {
-                    if(mistakes[i].length == this.POOLING.POOLING_SIZE && output[i].length == this.POOLING.POOLING_SIZE) {
-                        for(int j = 0; j < mistakes[i].length; j++) {
-                            if(mistakes[i][j].length != this.POOLING.POOLING_SIZE && output[i][j].length != this.POOLING.POOLING_SIZE)
-                                throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
+    public double[][][] backPropagate(Object d_L_d_Y, Object input, double learningRate) {
+        if(d_L_d_Y instanceof double[][][] gradient && input instanceof double[][][] layerInput) {
+            int ps = this.POOLING.POOLING_SIZE;
+            if(Matrices.validateSize(gradient, this.INPUT_CHANNELS, this.INPUT_HEIGHT / ps, this.INPUT_WIDTH / ps)) {
+                if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH)) {
+                    double[][][] output = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
+                    for(int i = 0; i < gradient.length; i++) {
+                        for(int j = 0; j < gradient[i].length; j++) {
+                            for(int k = 0; k < gradient[i][j].length; k++) {
+                                double[][] subMatrix = Matrices.subMatrix(layerInput[i], j * ps, k * ps, ps, ps);
+                                if(this.POOLING.POOLING_TYPE == PoolingType.MAX) {
+                                    int[] highestIndex = Matrices.highestValue(subMatrix);
+                                    output[i][j * ps + highestIndex[0]][k * ps + highestIndex[1]] = gradient[i][j][k];
+                                } else if(this.POOLING.POOLING_TYPE == PoolingType.MEAN) {
+                                    for(int l = 0; l < ps; l++)
+                                        for(int m = 0; m < ps; m++)
+                                            output[i][j * ps + l][k * ps + m] = gradient[i][j][k];
+                                }
+                            }
                         }
-                    } else
-                        throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
-                }
+                    }
                     
-                double[][][] newMistakes = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
-    
-                for(int i = 0; i < newMistakes.length; i++)
-                    for(int j = 0; j < newMistakes[i].length; j++)
-                        for(int k = 0; k < newMistakes[i][j].length; k++)
-                            newMistakes[i][j][k] = mistakes[i][j / this.POOLING.POOLING_SIZE][k / this.POOLING.POOLING_SIZE];
-    
-                return newMistakes;
+                    return output;
+                } else
+                    throw new IllegalArgumentException("Input is not of correct Size");
             } else
-                throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
+                throw new IllegalArgumentException("Gradient is not of correct Size");
         } else
-            throw new IllegalArgumentException("PreviousMistakes and LayerOutput are supposed to be a 3-Dimensional Double Array");
+            throw new IllegalArgumentException("Gradient and Input are supposed to be 3-Dimensional Double Arrays");
     }
-    
-    @Override
-    public void optimizeWeights(Object previousMistakes, Object layerOutput, double learningRate) {}
 }
