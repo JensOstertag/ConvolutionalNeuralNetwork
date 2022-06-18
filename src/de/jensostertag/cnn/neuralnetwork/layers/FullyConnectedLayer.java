@@ -3,43 +3,30 @@ package de.jensostertag.cnn.neuralnetwork.layers;
 import de.jensostertag.cnn.activationfunctions.ActivationFunction;
 import de.jensostertag.cnn.activationfunctions.LayerActivation;
 import de.jensostertag.cnn.neuralnetwork.Config;
+import de.jensostertag.cnn.neuralnetwork.util.Matrices;
 
 public class FullyConnectedLayer implements Layer {
-    protected final int INPUT_LENGTH;
-    protected final int OUTPUT_LENGTH;
-    protected double[][] weights;
-    protected double[][] previousWeightChange;
-    protected final ActivationFunction activationFunction;
+    private final int INPUT_LENGTH;
+    private final int OUTPUT_LENGTH;
+    private final ActivationFunction activationFunction;
+    public double[][] weights;
+    private double[] biases;
     
     public FullyConnectedLayer(int INPUT_LENGTH, int OUTPUT_LENGTH, ActivationFunction activationFunction) {
         this.INPUT_LENGTH = INPUT_LENGTH;
         this.OUTPUT_LENGTH = OUTPUT_LENGTH;
-        this.weights = new double[this.INPUT_LENGTH + 1][this.OUTPUT_LENGTH];
+        this.weights = Matrices.randomMatrix(this.INPUT_LENGTH, this.OUTPUT_LENGTH, Config.DEFAULT_WEIGHT_MIN, Config.DEFAULT_WEIGHT_MAX);
+        this.biases = Matrices.singleValueMatrix(this.OUTPUT_LENGTH, 0);
         this.activationFunction = activationFunction;
-        for(int i = 0; i < this.weights.length; i++)
-            for(int j = 0; j < this.weights[i].length; j++)
-                this.weights[i][j] = Config.DEFAULT_WEIGHT_MIN + Math.random() * (Config.DEFAULT_WEIGHT_MAX - Config.DEFAULT_WEIGHT_MIN);
-        this.previousWeightChange = new double[this.INPUT_LENGTH + 1][this.OUTPUT_LENGTH];
     }
     
     @Override
-    public Object propagate(Object input) {
+    public double[] propagate(Object input) {
         if(input instanceof double[] layerInput) {
             if(layerInput.length == this.INPUT_LENGTH) {
                 double[] output = new double[this.OUTPUT_LENGTH];
-                
-                for(int i = 0; i < this.weights.length; i++) {
-                    for(int j = 0; j < this.weights[i].length; j++) {
-                        double inputValue = 1;
-                        if(i != this.weights.length - 1)
-                            inputValue = layerInput[i];
-                        double weight = this.weights[i][j];
-                        
-                        output[j] += inputValue * weight;
-                    }
-                }
-                
-                return LayerActivation.activate(this.activationFunction, output);
+                output = Matrices.flatten(Matrices.add(Matrices.multiply(Matrices.asMatrix(layerInput), this.weights), Matrices.asMatrix(this.biases)));
+                return (double[]) LayerActivation.activate(this.activationFunction, output);
             } else
                 throw new IllegalArgumentException("Input is not of correct Size");
         } else
@@ -47,75 +34,43 @@ public class FullyConnectedLayer implements Layer {
     }
     
     @Override
-    public double[] mistakes(Object previousMistakes, Object layerOutput) {
-        if(previousMistakes instanceof double[] mistakes && layerOutput instanceof double[] output) {
-            if(mistakes.length == this.OUTPUT_LENGTH && output.length == this.OUTPUT_LENGTH) {
-                double[] newMistakes = new double[this.INPUT_LENGTH];
+    public double[] backPropagate(Object d_L_d_Y, Object input, double learningRate) {
+        if(d_L_d_Y instanceof double[] gradient && input instanceof double[] layerInput) {
+            if(gradient.length == this.OUTPUT_LENGTH && layerInput.length == this.INPUT_LENGTH) {
+                double[] net = Matrices.flatten(Matrices.add(Matrices.multiply(Matrices.asMatrix(layerInput), this.weights), Matrices.asMatrix(this.biases)));
+                double[] d_Y_d_net = (double[]) LayerActivation.derive(this.activationFunction, net);
+                double[] d_L_d_net = new double[this.OUTPUT_LENGTH];
+                for(int i = 0; i < d_L_d_net.length; i++)
+                    d_L_d_net[i] = gradient[i] * activationFunction.derivative(net[i]);
+                double[][] d_net_d_W = Matrices.transpose(Matrices.asMatrix(layerInput));
+                double[][] d_net_d_X = this.weights;
                 
-                for(int i = 0; i < this.weights.length - 1; i++) {
-                    for(int j = 0; j < mistakes.length; j++) {
-                        double outputValue = output[j];
-                        double derivative = this.activationFunction.derivative(this.activationFunction.where(outputValue));
-                        double mistake = mistakes[j];
-                        double weight = this.weights[i][j];
-                        
-                        newMistakes[i] += derivative * mistake * weight;
-                    }
-                }
+                double[][] d_L_d_W = Matrices.multiply(d_net_d_W, Matrices.asMatrix(d_L_d_net));
+                double[] d_L_d_B = d_L_d_net;
                 
-                return newMistakes;
+                double[] d_L_d_X = Matrices.asVector(Matrices.multiply(Matrices.asMatrix(d_L_d_net), Matrices.transpose(d_net_d_X)));
+                
+                this.weights = Matrices.add(Matrices.multiplyConstant(d_L_d_W, -learningRate), this.weights);
+                this.biases = Matrices.add(Matrices.multiplyConstant(d_L_d_B, -learningRate), this.biases);
+                
+                return d_L_d_X;
             } else
-                throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
+                throw new IllegalArgumentException("Gradient is not of correct Size");
         } else
-            throw new IllegalArgumentException("PreviousMistakes and LayerOutput are supposed to be a Double Array");
+            throw new IllegalArgumentException("Gradient is supposed to be a Double Array");
     }
     
-    public double[] outputMistakes(Object expectedOutput, Object layerOutput) {
-        if(expectedOutput instanceof double[] expected && layerOutput instanceof double[] output) {
-            if(expected.length == this.OUTPUT_LENGTH && output.length == this.OUTPUT_LENGTH) {
-                double[] newMistakes = new double[this.OUTPUT_LENGTH];
-                
-                for(int i = 0; i < newMistakes.length; i++) {
-                    double outputValue = output[i];
-                    double derivative = this.activationFunction.derivative(this.activationFunction.where(outputValue));
-                    double expectedValue = expected[i];
+    public double[] outputGradient(Object expectedOutput, Object actualOutput) {
+        if(expectedOutput instanceof double[] expected && actualOutput instanceof double[] actual) {
+            if(expected.length == this.OUTPUT_LENGTH && actual.length == this.OUTPUT_LENGTH) {
+                double[] loss = new double[this.OUTPUT_LENGTH];
+                for(int i = 0; i < loss.length; i++)
+                    loss[i] = actual[i] - expected[i];
                     
-                    newMistakes[i] = derivative * (outputValue - expectedValue);
-                }
-            
-                return newMistakes;
+                return loss;
             } else
-                throw new IllegalArgumentException("ExpectedOutput or LayerOutput is not of correct Size");
+                throw new IllegalArgumentException("ExpectedOutput is not of correct Size");
         } else
-            throw new IllegalArgumentException("ExpectedOutput and LayerOutput are supposed to be a Double Array");
-    }
-    
-    @Override
-    public void optimizeWeights(Object previousMistakes, Object layerOutput, double learningRate) {
-        if(previousMistakes instanceof double[] mistakes && layerOutput instanceof double[] output) {
-            if(mistakes.length == this.OUTPUT_LENGTH && output.length == this.INPUT_LENGTH) {
-                double[][] newWeights = new double[this.weights.length][];
-                for(int i = 0; i < newWeights.length; i++)
-                    newWeights[i] = this.weights[i].clone();
-                
-                for(int i = 0; i < this.weights.length; i++) {
-                    for(int j = 0; j < this.weights[i].length; j++) {
-                        double outputValue = 1;
-                        if(i < output.length)
-                            outputValue = output[i];
-                        double mistake = mistakes[j];
-                        double inertia = this.previousWeightChange[i][j] * Config.INERTIA;
-                        
-                        double deltaWeight = - learningRate * outputValue * mistake + inertia;
-                        this.previousWeightChange[i][j] = deltaWeight;
-                        newWeights[i][j] += deltaWeight;
-                    }
-                }
-                
-                this.weights = newWeights;
-            } else
-                throw new IllegalArgumentException("PreviousMistakes or LayerOutput is not of correct Size");
-        } else
-            throw new IllegalArgumentException("PreviousMistakes and LayerOutput are supposed to be a Double Array");
+            throw new IllegalArgumentException("ExpectedOutput is supposed to be a Double Array");
     }
 }
