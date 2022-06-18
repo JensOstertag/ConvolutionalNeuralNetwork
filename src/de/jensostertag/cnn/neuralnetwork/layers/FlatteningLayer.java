@@ -1,5 +1,7 @@
 package de.jensostertag.cnn.neuralnetwork.layers;
 
+import de.jensostertag.cnn.neuralnetwork.util.Matrices;
+
 public class FlatteningLayer implements Layer {
     private final int INPUT_CHANNELS;
     private final int INPUT_WIDTH;
@@ -12,57 +14,32 @@ public class FlatteningLayer implements Layer {
     }
     
     @Override
-    public Object propagate(Object input) {
+    public double[] propagate(Object input) {
         if(input instanceof double[][][] layerInput) {
-            if(layerInput.length == this.INPUT_CHANNELS) {
-                double[] output = new double[this.INPUT_CHANNELS * this.INPUT_WIDTH * this.INPUT_HEIGHT];
-                
-                for(int i = 0; i < layerInput.length; i++) {
-                    if(layerInput[i].length == this.INPUT_HEIGHT) {
-                        for(int j = 0; j < layerInput[i].length; j++) {
-                            if(layerInput[i][j].length == this.INPUT_WIDTH) {
-                                for(int k = 0; k < layerInput[i][j].length; k++) {
-                                    int index = i * this.INPUT_HEIGHT * this.INPUT_WIDTH + j * this.INPUT_WIDTH + k;
-                                    output[index] = layerInput[i][j][k];
-                                }
-                            } else
-                                throw new IllegalStateException("Input is not of correct Size");
-                        }
-                    } else
-                        throw new IllegalStateException("Input is not of correct Size");
-                }
-                
-                return output;
-            } else
-                throw new IllegalStateException("Input is not of correct Size");
+            if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH))
+                return Matrices.flatten(layerInput);
+            else
+                throw new IllegalArgumentException("Input is not of correct Size");
         } else
             throw new IllegalArgumentException("Input is supposed to be a 3-Dimensional Double Array");
     }
     
     @Override
-    public Object mistakes(Object previousMistakes, Object layerOutput) {
-        if(previousMistakes instanceof double[] mistakes && layerOutput instanceof double[]) {
-            double[][][] newMistakes = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
-            
-            int valuesPerMatrix = this.INPUT_HEIGHT * this.INPUT_WIDTH;
-            
-            for(int i = 0; i < mistakes.length; i++) {
-                double mistake = mistakes[i];
-                int index = i;
-                int channel = index / valuesPerMatrix;
-                index -= channel * valuesPerMatrix;
-                int row = index / this.INPUT_WIDTH;
-                index -= row * this.INPUT_WIDTH;
-                int col = index;
+    public double[][][] backPropagate(Object d_L_d_Y, Object input, double learningRate) {
+        if(d_L_d_Y instanceof double[] gradient && input instanceof double[][][]) {
+            if(gradient.length == this.INPUT_CHANNELS * this.INPUT_HEIGHT * this.INPUT_WIDTH) {
+                double[][][] output = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
+                for(int i = 0; i < gradient.length; i++) {
+                    int channel = i / (this.INPUT_HEIGHT * this.INPUT_WIDTH);
+                    int row = i / this.INPUT_WIDTH - channel * this.INPUT_HEIGHT;
+                    int column = i - this.INPUT_WIDTH * (this.INPUT_HEIGHT * channel + row);
+                    output[channel][row][column] = gradient[i];
+                }
                 
-                newMistakes[channel][row][col] = mistake;
-            }
-            
-            return newMistakes;
+                return output;
+            } else
+                throw new IllegalArgumentException("Gradient is not of correct Size");
         } else
-            throw new IllegalArgumentException("PreviousMistakes and LayerOutput are supposed to be Double Array");
+            throw new IllegalArgumentException("Gradient is supposed to be a Double Array");
     }
-    
-    @Override
-    public void optimizeWeights(Object previousMistakes, Object layerOutput, double learningRate) {}
 }
