@@ -172,6 +172,15 @@ public class Matrices {
             throw new IllegalArgumentException("Cannot calculate the Product of these Matrices");
     }
     
+    public static double[][] dotProduct(double[][] matrix1, double[][] matrix2) {
+        int[] dimensions = getSameSize(matrix1, matrix2);
+        double[][] output = new double[dimensions[0]][dimensions[1]];
+        for(int i = 0; i < output.length; i++)
+            for(int j = 0; j < output[i].length; j++)
+                output[i][j] = matrix1[i][j] * matrix2[i][j];
+        return output;
+    }
+    
     public static double[] multiplyConstant(double[] vector, double constant) {
         double[] output = new double[vector.length];
         for(int i = 0; i < vector.length; i++)
@@ -264,10 +273,7 @@ public class Matrices {
         for(int i = 0; i < output.length; i++) {
             for(int j = 0; j < output[i].length; j++) {
                 double[][] subMatrix = subMatrix(matrix, i, j, kernelDimensions[0], kernelDimensions[1]);
-                
-                for(int k = 0; k < kernel.length; k++)
-                    for(int l = 0; l < kernel[k].length; l++)
-                        output[i][j] += subMatrix[k][l] * kernel[k][l];
+                output[i][j] = sum(dotProduct(subMatrix, kernel));
             }
         }
         return output;
