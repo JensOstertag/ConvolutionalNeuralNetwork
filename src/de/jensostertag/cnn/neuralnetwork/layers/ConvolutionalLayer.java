@@ -69,11 +69,21 @@ public class ConvolutionalLayer implements Layer {
                     double[][][][] d_L_d_K = new double[this.OUTPUT_CHANNELS][this.INPUT_CHANNELS][this.KERNEL_SIZE][this.KERNEL_SIZE];
                     double[][][] d_L_d_B = new double[this.OUTPUT_CHANNELS][this.INPUT_HEIGHT - 2 * eps][this.INPUT_WIDTH - 2 * eps];
                     double[][][] d_L_d_X = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
+    
+                    double[][][] net = new double[this.OUTPUT_CHANNELS][][];
+    
+                    for(int i = 0; i < this.OUTPUT_CHANNELS; i++) {
+                        net[i] = this.biases[i];
+                        for(int j = 0; j < this.INPUT_CHANNELS; j++) {
+                            double[][] inputMatrix = this.PADDING.applyPadding(layerInput[j], this.KERNEL_SIZE);
+                            double[][] convolved = Matrices.convolve(inputMatrix, this.kernel[i][j]);
+                            net[i] = Matrices.add(net[i], convolved);
+                        }
+                    }
                     
                     for(int i = 0; i < this.OUTPUT_CHANNELS; i++) {
-                        //double[][] derivedGradient = (double[][]) LayerActivation.derive(this.activationFunction, gradient[i]);
-                        //double[][] workingGradient = Matrices.dotProduct(gradient[i], derivedGradient);
-                        double[][] workingGradient = gradient[i];
+                        double[][] d_Y_d_net = (double[][]) LayerActivation.derive(this.activationFunction, net[i]);
+                        double[][] workingGradient = Matrices.dotProduct(gradient[i], d_Y_d_net);
                         
                         for(int j = 0; j < this.INPUT_CHANNELS; j++) {
                             double[][] inputMatrix = this.PADDING.applyPadding(layerInput[j], this.KERNEL_SIZE);
@@ -87,77 +97,6 @@ public class ConvolutionalLayer implements Layer {
                             this.kernel[i][j] = Matrices.add(this.kernel[i][j], Matrices.multiplyConstant(d_L_d_K[i][j], -learningRate));
                         this.biases[i] = Matrices.add(this.biases[i], Matrices.multiplyConstant(d_L_d_B[i], -learningRate));
                     }
-                    
-                    return null;
-                    
-                    /*double[][][][] d_L_d_K = new double[this.OUTPUT_CHANNELS][this.INPUT_CHANNELS][this.KERNEL_SIZE][this.KERNEL_SIZE];
-                    for(int i = 0; i < this.OUTPUT_CHANNELS; i++) {
-                        double[][] derivedGradient = (double[][]) LayerActivation.derive(this.activationFunction, gradient[i]);
-                        double[][] workingGradient = Matrices.dotProduct(gradient[i], derivedGradient);
-                        
-                        for(int j = 0; j < this.INPUT_CHANNELS; j++) {
-                            int ps = this.PADDING.getPaddingSize(this.KERNEL_SIZE);
-                            for(int k = 0; k < layerInput[j].length - 2*ps; k++) {
-                                for(int l = 0; l < layerInput[j][k].length - 2*ps; l++) {
-                                    double[][] subMatrix = Matrices.subMatrix(layerInput[j], k, l, this.KERNEL_SIZE, this.KERNEL_SIZE);
-                                    d_L_d_K[i][j] = Matrices.add(d_L_d_K[i][j], Matrices.multiplyConstant(subMatrix, workingGradient[k][l]));
-                                }
-                            }
-                        }
-                    }
-                    
-                    for(int i = 0; i < this.OUTPUT_CHANNELS; i++) {
-                        for(int j = 0; j < this.INPUT_CHANNELS; j++) {
-                            double[] addKernel = new double[this.KERNEL_SIZE * this.KERNEL_SIZE + 1];
-                            for(int k = 0; k < addKernel.length; k++)
-                                if(k < this.KERNEL_SIZE * this.KERNEL_SIZE)
-                                    addKernel[k] = d_L_d_K[i][j][k / this.KERNEL_SIZE][k % this.KERNEL_SIZE];
-                            this.kernel[i][j] = Matrices.add(this.kernel[i][j], Matrices.multiplyConstant(addKernel, -learningRate));
-                        }
-                    }
-                    
-                    return null;*/
-                    
-                    
-                    
-                    /*
-                    double[][][] d_L_d_X = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
-                    
-                    for(int i = 0; i < this.OUTPUT_CHANNELS; i++) {
-                        double[][] derivedGradient = (double[][]) LayerActivation.derive(this.activationFunction, gradient[i]);
-                        double[][] workingGradient = Matrices.dotProduct(gradient[i], derivedGradient);
-                        
-                        for(int j = 0; j < this.INPUT_CHANNELS; j++) {
-                            double[][] workingInput = this.PADDING.applyPadding(layerInput[j], this.KERNEL_SIZE);
-                            double[][] d_L_d_K = Matrices.convolve(workingInput, workingGradient);
-                            double d_L_d_B = Matrices.sum(workingGradient);
-                            
-                            double[][] currentKernel = new double[this.KERNEL_SIZE][this.KERNEL_SIZE];
-                            for(int k = 0; k < currentKernel.length; k++)
-                                for(int l = 0; l < currentKernel[k].length; l++)
-                                    currentKernel[k][l] = this.kernel[i][j][k * currentKernel[k].length + l];
-                            double[][] newKernel = Matrices.add(currentKernel, Matrices.multiplyConstant(d_L_d_K, -learningRate));
-                            //double currentBias = this.kernel[i][j][this.kernel[i][j].length - 1];
-                            double currentBias = 0;
-                            double newBias = currentBias + d_L_d_B * learningRate;
-                            double[] newKernelVector = new double[this.KERNEL_SIZE * this.KERNEL_SIZE + 1];
-                            for(int k = 0; k < newKernelVector.length; k++) {
-                                if(k < this.KERNEL_SIZE * this.KERNEL_SIZE)
-                                    newKernelVector[k] = newKernel[k / this.KERNEL_SIZE][k % this.KERNEL_SIZE];
-                                else
-                                    newKernelVector[k] = newBias;
-                            }
-                            
-                            int ps = this.PADDING.getPaddingSize(this.KERNEL_SIZE);
-                            double[][] paddedGradient = Matrices.center(workingGradient, this.INPUT_HEIGHT + 2*ps, this.INPUT_WIDTH + 2*ps);
-                            d_L_d_X[j] = Matrices.add(d_L_d_X[j], Matrices.convolve(paddedGradient, Matrices.rotate(currentKernel)));
-                            
-                            this.kernel[i][j] = newKernelVector;
-                        }
-                    }
-                    
-                    for(int i = 0; i < d_L_d_X.length; i++)
-                        d_L_d_X[i] = Matrices.multiplyConstant(d_L_d_X[i], this.OUTPUT_CHANNELS);
                     
                     return d_L_d_X;
                     */
