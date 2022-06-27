@@ -10,6 +10,8 @@ public class PoolingLayer implements Layer {
     private final int INPUT_HEIGHT;
     private final Pooling POOLING;
     
+    private Object input;
+    
     public PoolingLayer(int INPUT_CHANNELS, int INPUT_WIDTH, int INPUT_HEIGHT, Pooling POOLING) {
         this.INPUT_CHANNELS = INPUT_CHANNELS;
         this.INPUT_WIDTH = INPUT_WIDTH;
@@ -23,6 +25,8 @@ public class PoolingLayer implements Layer {
     @Override
     public double[][][] propagate(Object input) {
         if(input instanceof double[][][] layerInput) {
+            this.input = input;
+            
             if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH)) {
                 int ps = this.POOLING.POOLING_SIZE;
                 double[][][] output = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT / ps][this.INPUT_WIDTH / ps];
@@ -50,8 +54,8 @@ public class PoolingLayer implements Layer {
     }
     
     @Override
-    public double[][][] backPropagate(Object d_L_d_Y, Object input, double learningRate) {
-        if(d_L_d_Y instanceof double[][][] gradient && input instanceof double[][][] layerInput) {
+    public double[][][] backPropagate(Object d_L_d_Y, double learningRate) {
+        if(d_L_d_Y instanceof double[][][] gradient && this.input instanceof double[][][] layerInput) {
             int ps = this.POOLING.POOLING_SIZE;
             if(Matrices.validateSize(gradient, this.INPUT_CHANNELS, this.INPUT_HEIGHT / ps, this.INPUT_WIDTH / ps)) {
                 if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH)) {

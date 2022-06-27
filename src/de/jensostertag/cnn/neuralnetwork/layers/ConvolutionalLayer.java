@@ -20,6 +20,8 @@ public class ConvolutionalLayer implements Layer {
     public double[][][] biases;
     private final ActivationFunction activationFunction;
     
+    private Object input;
+    
     public ConvolutionalLayer(int INPUT_CHANNELS, int OUTPUT_CHANNELS, int INPUT_HEIGHT, int INPUT_WIDTH, int KERNEL_SIZE, PaddingType paddingType, ActivationFunction activationFunction) {
         this.INPUT_CHANNELS = INPUT_CHANNELS;
         this.OUTPUT_CHANNELS = OUTPUT_CHANNELS;
@@ -41,6 +43,8 @@ public class ConvolutionalLayer implements Layer {
     @Override
     public double[][][] propagate(Object input) {
         if(input instanceof double[][][] layerInput) {
+            this.input = input;
+            
             if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH)) {
                 double[][][] output = new double[this.OUTPUT_CHANNELS][][];
                 
@@ -61,8 +65,8 @@ public class ConvolutionalLayer implements Layer {
     }
     
     @Override
-    public Object backPropagate(Object d_L_d_Y, Object input, double learningRate) {
-        if(d_L_d_Y instanceof double[][][] gradient && input instanceof double[][][] layerInput) {
+    public Object backPropagate(Object d_L_d_Y, double learningRate) {
+        if(d_L_d_Y instanceof double[][][] gradient && this.input instanceof double[][][] layerInput) {
             int eps = this.PADDING.getEffectivePaddingSize(this.KERNEL_SIZE);
             if(Matrices.validateSize(gradient, this.OUTPUT_CHANNELS, this.INPUT_HEIGHT - 2 * eps, this.INPUT_WIDTH - 2 * eps)) {
                 if(Matrices.validateSize(layerInput, this.INPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH)) {
@@ -88,6 +92,10 @@ public class ConvolutionalLayer implements Layer {
                         for(int j = 0; j < this.INPUT_CHANNELS; j++) {
                             double[][] inputMatrix = this.PADDING.applyPadding(layerInput[j], this.KERNEL_SIZE);
                             d_L_d_K[i][j] = Matrices.convolve(inputMatrix, workingGradient);
+    
+                            int ps = this.PADDING.getPaddingSize(this.KERNEL_SIZE);
+                            double[][] padded = Matrices.center(workingGradient, this.INPUT_HEIGHT + 2*ps, this.INPUT_WIDTH + 2*ps);
+                            d_L_d_X[j] = Matrices.add(d_L_d_X[j], Matrices.convolve(padded, Matrices.rotate(this.kernel[i][j])));
                         }
                         d_L_d_B[i] = gradient[i];
                     }
@@ -99,7 +107,6 @@ public class ConvolutionalLayer implements Layer {
                     }
                     
                     return d_L_d_X;
-                    */
                 } else
                     throw new IllegalArgumentException("Input is not of correct Size");
             } else
