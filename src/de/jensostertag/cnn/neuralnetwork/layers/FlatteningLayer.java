@@ -25,8 +25,8 @@ public class FlatteningLayer implements Layer {
     }
     
     @Override
-    public double[][][] backPropagate(Object d_L_d_Y, Object input, double learningRate) {
-        if(d_L_d_Y instanceof double[] gradient && input instanceof double[][][]) {
+    public double[][][] backPropagate(Object d_L_d_Y, double learningRate) {
+        if(d_L_d_Y instanceof double[] gradient) {
             if(gradient.length == this.INPUT_CHANNELS * this.INPUT_HEIGHT * this.INPUT_WIDTH) {
                 double[][][] output = new double[this.INPUT_CHANNELS][this.INPUT_HEIGHT][this.INPUT_WIDTH];
                 for(int i = 0; i < gradient.length; i++) {

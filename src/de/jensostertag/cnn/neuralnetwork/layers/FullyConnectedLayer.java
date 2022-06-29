@@ -12,6 +12,8 @@ public class FullyConnectedLayer implements Layer {
     public double[][] weights;
     private double[] biases;
     
+    private Object input;
+    
     public FullyConnectedLayer(int INPUT_LENGTH, int OUTPUT_LENGTH, ActivationFunction activationFunction) {
         this.INPUT_LENGTH = INPUT_LENGTH;
         this.OUTPUT_LENGTH = OUTPUT_LENGTH;
@@ -23,6 +25,8 @@ public class FullyConnectedLayer implements Layer {
     @Override
     public double[] propagate(Object input) {
         if(input instanceof double[] layerInput) {
+            this.input = input;
+            
             if(layerInput.length == this.INPUT_LENGTH) {
                 double[] output = new double[this.OUTPUT_LENGTH];
                 output = Matrices.flatten(Matrices.add(Matrices.multiply(Matrices.asMatrix(layerInput), this.weights), Matrices.asMatrix(this.biases)));
@@ -34,8 +38,8 @@ public class FullyConnectedLayer implements Layer {
     }
     
     @Override
-    public double[] backPropagate(Object d_L_d_Y, Object input, double learningRate) {
-        if(d_L_d_Y instanceof double[] gradient && input instanceof double[] layerInput) {
+    public double[] backPropagate(Object d_L_d_Y, double learningRate) {
+        if(d_L_d_Y instanceof double[] gradient && this.input instanceof double[] layerInput) {
             if(gradient.length == this.OUTPUT_LENGTH && layerInput.length == this.INPUT_LENGTH) {
                 double[] net = Matrices.flatten(Matrices.add(Matrices.multiply(Matrices.asMatrix(layerInput), this.weights), Matrices.asMatrix(this.biases)));
                 double[] d_Y_d_net = (double[]) LayerActivation.derive(this.activationFunction, net);
