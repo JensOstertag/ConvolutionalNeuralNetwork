@@ -24,24 +24,6 @@ public class CNN {
         return output;
     }
     
-    public void optimizeWeights(Object[] output, double[] expectedOutput, double learningRate) {
-        Object previousGradient = null;
-        
-        if(this.layers.get(this.layers.size() - 1) instanceof FullyConnectedLayer) {
-            if(output[output.length - 1] instanceof double[] actualOutput) {
-                FullyConnectedLayer lastLayer = (FullyConnectedLayer) this.layers.get(this.layers.size() - 1);
-                previousGradient = lastLayer.outputGradient(expectedOutput, actualOutput);
-            } else
-                throw new IllegalArgumentException("Output is of illegal Format");
-        } else
-            throw new IllegalStateException("The last Layer in the Neural Network is supposed to be a Fully Connected Layer");
-        
-        for(int i = this.layers.size() - 1; i >= 0; i--) {
-            Layer layer = this.layers.get(i);
-            previousGradient = layer.backPropagate(previousGradient, output[i], learningRate);
-        }
-    }
-    
     public double getAccuracy(Dataset testingDataset) {
         if(testingDataset.isValid()) {
             double accuracy = 1;
