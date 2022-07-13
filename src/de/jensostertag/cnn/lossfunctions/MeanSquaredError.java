@@ -1,6 +1,6 @@
 package de.jensostertag.cnn.lossfunctions;
 
-import de.jensostertag.cnn.neuralnetwork1.util.Matrices;
+import de.jensostertag.cnn.neuralnetwork.util.Matrices;
 
 public class MeanSquaredError implements LossFunction {
     @Override
