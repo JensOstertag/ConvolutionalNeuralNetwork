@@ -1,7 +1,8 @@
 package de.jensostertag.cnn.neuralnetwork;
 
 import de.jensostertag.cnn.dataset.Dataset;
-import de.jensostertag.cnn.neuralnetwork.layers.FullyConnectedLayer;
+import de.jensostertag.cnn.lossfunctions.LossFunction;
+import de.jensostertag.cnn.neuralnetwork.layers.ConvolutionalLayer;
 import de.jensostertag.cnn.neuralnetwork.layers.Layer;
 
 import java.util.ArrayList;
@@ -80,19 +81,18 @@ public class CNN {
             throw new IllegalArgumentException("Datasets are supposed to be validated");
     }
     
-    public double train(Dataset trainingDataset, Dataset testingDataset) {
+    public double train(Dataset trainingDataset, Dataset testingDataset, LossFunction lossFunction, int epochs) {
         if(trainingDataset.isValid() && testingDataset.isValid()) {
             double previousAccuracy = 0;
             double currentAccuracy = this.getAccuracy(testingDataset);
             double bestAccuracy = currentAccuracy;
-            boolean accuracyReached = currentAccuracy >= Config.AIMING_ACCURACY;
             int iterationsCounter = 0;
             
             ArrayList<Layer> bestLayers = new ArrayList<>(this.layers.size());
             
             double currentLearningRate = Config.STARTING_LEARNING_RATE;
             
-            while(iterationsCounter < Config.MAX_TRAINING_ITERATIONS && !(accuracyReached)) {
+            for(int e = 0; e < epochs; e++) {
                 if(iterationsCounter != 0) {
                     if(Math.abs(previousAccuracy - currentAccuracy) <= Config.ADJUST_LEARNING_RATE_DIFF)
                         currentLearningRate *= (1 + Config.ADJUST_LEARNING_RATE);
@@ -103,23 +103,31 @@ public class CNN {
                     currentLearningRate = Math.max(Config.LEARNING_RATE_MIN, currentLearningRate);
                 }
                 
+                double loss = 0;
+                
                 for(int i = 0; i < trainingDataset.getInputs().length; i++) {
                     Object input = trainingDataset.getInput(i);
                     Object expectedOutput = trainingDataset.getExpectedOutput(i);
-                    
-                    if(expectedOutput instanceof double[] expected) {
-                        Object[] output = this.propagate(input);
-                        optimizeWeights(output, expected, currentLearningRate);
-                    } else
-                        throw new IllegalArgumentException("ExpectedOutput is supposed to be a Double Array");
-                }
+                    Object[] output = this.propagate(input);
     
+                    loss += lossFunction.function((double[])expectedOutput, (double[])output[output.length - 1]);
+                    
+                    Object gradient = lossFunction.derivative((double[]) expectedOutput, (double[]) output[output.length - 1]);
+                    for(int j = this.layers.size() - 1; j >= 0; j--)
+                        gradient = this.layers.get(j).backPropagate(gradient, currentLearningRate);
+                }
+                
+                loss /= trainingDataset.getInputs().length;
+                
+                System.out.print("Training " + (100*(double)(e+1)/epochs) + "% complete with " + (e+1) + " Epochs, current Loss: " + loss);
                 previousAccuracy = currentAccuracy;
                 currentAccuracy = this.getAccuracy(testingDataset);
-                System.out.println(currentAccuracy);
-    
-                if(currentAccuracy >= Config.AIMING_ACCURACY)
-                    accuracyReached = true;
+                System.out.print(", Accuracy: " + currentAccuracy);
+                System.out.println();
+                
+                ConvolutionalLayer cl = (ConvolutionalLayer) this.layers.get(0);
+                if(e >= 75)
+                    System.out.println(Arrays.deepToString(cl.kernel));
     
                 if(currentAccuracy > bestAccuracy) {
                     bestAccuracy = currentAccuracy;
