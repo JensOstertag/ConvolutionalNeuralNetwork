@@ -6,6 +6,12 @@ import de.jensostertag.cnn.imageprocessing.GrayscaleImage;
 import java.io.File;
 
 public class ImageDataset extends Dataset {
+    /**
+     * Add all Images of a given Folder to the Dataset
+     * @param folderPath Path to the Folder
+     * @param expectedOutput Expected Output for all Images within the Folder
+     * @param grayScale Import as Grayscaled Images
+     */
     public void addFolder(String folderPath, Object expectedOutput, boolean grayScale) {
         if(!(super.isValid())) {
             File folder = new File(folderPath);
