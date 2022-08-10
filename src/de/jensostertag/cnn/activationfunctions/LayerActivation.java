@@ -1,6 +1,12 @@
 package de.jensostertag.cnn.activationfunctions;
 
 public class LayerActivation {
+    /**
+     * Apply an Activation Function on an Input
+     * @param activationFunction Activation Function
+     * @param input Input
+     * @return Input with applied Activation Function
+     */
     public static Object activate(ActivationFunction activationFunction, Object input) {
         if(input instanceof Double input0d) {
             return activationFunction.function(input0d);
@@ -37,6 +43,12 @@ public class LayerActivation {
             throw new IllegalArgumentException("This Method only allows 0-Dimensional up to 3-Dimensional Double Values as Input");
     }
     
+    /**
+     * Apply the Derivative of an Activation Function on an Input
+     * @param activationFunction Activation Function
+     * @param input Input
+     * @return Input with applied Activation Function Derivative
+     */
     public static Object derive(ActivationFunction activationFunction, Object input) {
         if(input instanceof Double input0d) {
             return activationFunction.derivative(input0d);
