@@ -32,8 +32,16 @@ The last Section is used for Debugging Settings.
 - ``LOGGING_LEVEL``: Select how detailed the Debugging Messages will be.
 
 ### Instantiating a Network
+Instantiate a Neural Network with
+```
+CNN cnn = new CNN();
+```
+After that, you can add Layers by using
+```
+cnn.addLayer(Layer layer);
+```
 
-### Adding Layers
+### Layer Types
 
 ### Training
 
