@@ -84,4 +84,9 @@ public class PoolingLayer implements Layer {
         } else
             throw new IllegalArgumentException("Gradient and Input are supposed to be 3-Dimensional Double Arrays");
     }
+
+    @Override
+    public PoolingLayer copy() {
+        return new PoolingLayer(this.INPUT_CHANNELS, this.INPUT_WIDTH, this.INPUT_HEIGHT, this.POOLING.copy());
+    }
 }

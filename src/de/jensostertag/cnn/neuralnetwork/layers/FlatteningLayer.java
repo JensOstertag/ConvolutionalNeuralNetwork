@@ -42,4 +42,9 @@ public class FlatteningLayer implements Layer {
         } else
             throw new IllegalArgumentException("Gradient is supposed to be a Double Array");
     }
+
+    @Override
+    public FlatteningLayer copy() {
+        return new FlatteningLayer(this.INPUT_CHANNELS, this.INPUT_WIDTH, this.INPUT_HEIGHT);
+    }
 }

@@ -11,4 +11,8 @@ public class Pooling {
         else
             throw new IllegalArgumentException("PoolingSize is supposed to be a positive Integer");
     }
+
+    public Pooling copy() {
+        return new Pooling(this.POOLING_TYPE, this.POOLING_SIZE);
+    }
 }

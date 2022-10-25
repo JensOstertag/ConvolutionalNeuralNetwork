@@ -63,6 +63,24 @@ public class FullyConnectedLayer implements Layer {
         } else
             throw new IllegalArgumentException("Gradient is supposed to be a Double Array");
     }
+
+    @Override
+    public FullyConnectedLayer copy() {
+        double[][] weights = new double[this.weights.length][];
+        double[] biases = new double[this.biases.length];
+
+        for(int i = 0; i < this.weights.length; i++) {
+            System.arraycopy(this.weights[i], 0, weights[i], 0, this.weights[i].length);
+        }
+
+        System.arraycopy(this.biases, 0, biases, 0, this.biases.length);
+
+        FullyConnectedLayer fullyConnectedLayer = new FullyConnectedLayer(this.INPUT_LENGTH, this.OUTPUT_LENGTH, this.activationFunction);
+        fullyConnectedLayer.weights = weights;
+        fullyConnectedLayer.biases = biases;
+
+        return fullyConnectedLayer;
+    }
     
     public double[] outputGradient(Object expectedOutput, Object actualOutput) {
         if(expectedOutput instanceof double[] expected && actualOutput instanceof double[] actual) {

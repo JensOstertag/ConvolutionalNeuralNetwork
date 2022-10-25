@@ -114,4 +114,33 @@ public class ConvolutionalLayer implements Layer {
         } else
             throw new IllegalArgumentException("Gradient and Input are supposed to be 3-Dimensional Double Arrays");
     }
+
+    @Override
+    public ConvolutionalLayer copy() {
+        double[][][][] kernel = new double[this.kernel.length][][][];
+        double[][][] biases = new double[this.biases.length][][];
+
+        for(int i = 0; i < kernel.length; i++) {
+            kernel[i] = new double[this.kernel[i].length][][];
+            for(int j = 0; j < kernel[i].length; j++) {
+                kernel[i][j] = new double[this.kernel[i][j].length][];
+                for(int k = 0; k < kernel[i][j].length; k++) {
+                    System.arraycopy(this.kernel[i][j][k], 0, kernel[i][j][k], 0, this.kernel[i][j][k].length);
+                }
+            }
+        }
+
+        for(int i = 0; i < biases.length; i++) {
+            biases[i] = new double[this.biases[i].length][];
+            for(int j = 0; j < biases[i].length; j++) {
+                System.arraycopy(this.biases[i][j], 0, biases[i][j], 0, this.biases[i][j].length);
+            }
+        }
+
+        ConvolutionalLayer convolutionalLayer = new ConvolutionalLayer(this.INPUT_CHANNELS, this.OUTPUT_CHANNELS, this.INPUT_HEIGHT, this.INPUT_WIDTH, this.KERNEL_SIZE, this.PADDING.PADDING_TYPE, this.activationFunction);
+        convolutionalLayer.kernel = kernel;
+        convolutionalLayer.biases = biases;
+
+        return convolutionalLayer;
+    }
 }
