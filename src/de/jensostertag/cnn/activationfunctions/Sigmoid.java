@@ -8,8 +8,7 @@ public class Sigmoid implements ActivationFunction {
     
     @Override
     public double derivative(double x) {
-        if(Double.isInfinite(x)) return 0;
-        return (Math.exp(-x) / Math.pow(1 + Math.exp(-x), 2));
+        return function(x) * (1 - function(x));
     }
     
     @Override
