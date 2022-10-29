@@ -7,8 +7,6 @@ import de.jensostertag.cnn.neuralnetwork.util.Matrices;
 import de.jensostertag.cnn.neuralnetwork.util.padding.Padding;
 import de.jensostertag.cnn.neuralnetwork.util.padding.PaddingType;
 
-import java.util.Arrays;
-
 public class ConvolutionalLayer implements Layer {
     private final int INPUT_CHANNELS;
     private final int OUTPUT_CHANNELS;
