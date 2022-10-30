@@ -2,6 +2,7 @@ package de.jensostertag.cnn.examples;
 
 import de.jensostertag.cnn.activationfunctions.ActivationFunction;
 import de.jensostertag.cnn.dataset.ImageDataset;
+import de.jensostertag.cnn.lossfunctions.LossFunction;
 import de.jensostertag.cnn.neuralnetwork.CNN;
 import de.jensostertag.cnn.neuralnetwork.layers.ConvolutionalLayer;
 import de.jensostertag.cnn.neuralnetwork.layers.FlatteningLayer;
@@ -17,7 +18,7 @@ public class MNIST {
         ImageDataset testingDataset = buildTestingDataset();
         
         CNN cnn = buildCNN();
-        cnn.train(trainingDataset, testingDataset);
+        cnn.train(trainingDataset, testingDataset, LossFunction.lossMeanSquaredError, 100);
     }
     
     public static CNN buildCNN() {
@@ -30,15 +31,6 @@ public class MNIST {
         cnn.addLayer(new FullyConnectedLayer(12*7*7, 6*7*7, ActivationFunction.activationStep));
         cnn.addLayer(new FullyConnectedLayer(6*7*7, 10, ActivationFunction.activationSigmoid));
         
-        return cnn;
-    }
-    
-    public static CNN buildNN() {
-        CNN cnn = new CNN();
-        cnn.addLayer(new FlatteningLayer(1, 28, 28));
-        cnn.addLayer(new FullyConnectedLayer(28*28, 28*28/2, ActivationFunction.activationStep));
-        cnn.addLayer(new FullyConnectedLayer(28*28/2, 10, ActivationFunction.activationSigmoid));
-    
         return cnn;
     }
     
